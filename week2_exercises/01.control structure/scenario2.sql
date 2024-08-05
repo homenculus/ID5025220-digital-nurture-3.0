@@ -1,13 +1,19 @@
+DECLARE
+    CURSOR customer_cursor IS
+        SELECT customer_id, balance
+        FROM customers
+        WHERE balance > 10000;
+    v_customer_id customers.customer_id%TYPE;
 BEGIN
-    FOR customer_record IN (SELECT customer_id, balance
-                            FROM customers) LOOP
-        IF customer_record.balance > 10000 THEN
-            UPDATE customers
-            SET is_vip = TRUE
-            WHERE customer_id = customer_record.customer_id;
-        END IF;
+    OPEN customer_cursor;
+    LOOP
+        FETCH customer_cursor INTO v_customer_id;
+        EXIT WHEN customer_cursor%NOTFOUND;
+        
+        UPDATE customers
+        SET IsVIP = TRUE
+        WHERE customer_id = v_customer_id;
     END LOOP;
-    
-    COMMIT;
+    CLOSE customer_cursor;
 END;
 /
