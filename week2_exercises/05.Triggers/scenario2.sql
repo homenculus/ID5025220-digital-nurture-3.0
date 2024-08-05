@@ -1,8 +1,8 @@
 CREATE OR REPLACE TRIGGER LogTransaction
-AFTER INSERT ON Transactions
+AFTER INSERT ON transactions
 FOR EACH ROW
 BEGIN
-    INSERT INTO AuditLog (TransactionID, TransactionDate, OldAmount, NewAmount, ChangedBy)
-    VALUES (:NEW.TransactionID, SYSDATE, :NEW.Amount, :NEW.Amount, USER);
+    INSERT INTO audit_log (transaction_id, action, action_date)
+    VALUES (:NEW.transaction_id, 'INSERT', SYSDATE);
 END LogTransaction;
 /
