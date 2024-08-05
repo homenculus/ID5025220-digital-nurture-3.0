@@ -1,37 +1,27 @@
 DECLARE
-    CURSOR customer_cursor IS
-        SELECT DISTINCT customer_id
-        FROM transactions
-        WHERE transaction_date BETWEEN TRUNC(SYSDATE, 'MONTH') AND LAST_DAY(SYSDATE);
-    
-    v_customer_id NUMBER;
-    
-    CURSOR transaction_cursor(p_customer_id NUMBER) IS
-        SELECT transaction_id, transaction_date, amount
-        FROM transactions
-        WHERE customer_id = p_customer_id
-        AND transaction_date BETWEEN TRUNC(SYSDATE, 'MONTH') AND LAST_DAY(SYSDATE);
-    
-    v_transaction_id NUMBER;
-    v_transaction_date DATE;
-    v_amount NUMBER;
+    CURSOR transaction_cursor IS
+        SELECT t.transaction_id, t.account_id, t.transaction_date, t.amount, a.customer_id
+        FROM transactions t
+        JOIN accounts a ON t.account_id = a.account_id
+        WHERE EXTRACT(MONTH FROM t.transaction_date) = EXTRACT(MONTH FROM SYSDATE)
+          AND EXTRACT(YEAR FROM t.transaction_date) = EXTRACT(YEAR FROM SYSDATE);
+
+    v_transaction_id transactions.transaction_id%TYPE;
+    v_account_id transactions.account_id%TYPE;
+    v_transaction_date transactions.transaction_date%TYPE;
+    v_amount transactions.amount%TYPE;
+    v_customer_id accounts.customer_id%TYPE;
 BEGIN
-    FOR customer_rec IN customer_cursor LOOP
-        v_customer_id := customer_rec.customer_id;
-        
-        DBMS_OUTPUT.PUT_LINE('Statement for Customer ID: ' || v_customer_id);
-        
-        FOR transaction_rec IN transaction_cursor(v_customer_id) LOOP
-            v_transaction_id := transaction_rec.transaction_id;
-            v_transaction_date := transaction_rec.transaction_date;
-            v_amount := transaction_rec.amount;
-            
-            DBMS_OUTPUT.PUT_LINE('Transaction ID: ' || v_transaction_id || 
-                                 ', Date: ' || v_transaction_date || 
-                                 ', Amount: ' || v_amount);
-        END LOOP;
-        
-        DBMS_OUTPUT.PUT_LINE('---');
+    OPEN transaction_cursor;
+    LOOP
+        FETCH transaction_cursor INTO v_transaction_id, v_account_id, v_transaction_date, v_amount, v_customer_id;
+        EXIT WHEN transaction_cursor%NOTFOUND;
+
+        DBMS_OUTPUT.PUT_LINE('Customer ID: ' || v_customer_id ||
+                             ', Transaction ID: ' || v_transaction_id ||
+                             ', Date: ' || TO_CHAR(v_transaction_date, 'YYYY-MM-DD') ||
+                             ', Amount: ' || v_amount);
     END LOOP;
+    CLOSE transaction_cursor;
 END;
 /
