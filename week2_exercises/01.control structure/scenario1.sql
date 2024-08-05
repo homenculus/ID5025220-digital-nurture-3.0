@@ -1,14 +1,20 @@
+DECLARE
+    CURSOR customer_cursor IS
+        SELECT customer_id, age, loan_interest_rate
+        FROM customers
+        WHERE age > 60;
+    v_customer_id customers.customer_id%TYPE;
+    v_loan_interest_rate customers.loan_interest_rate%TYPE;
 BEGIN
-    FOR customer_record IN (SELECT customer_id, age, loan_interest_rate
-                            FROM customers
-                            JOIN loans ON customers.customer_id = loans.customer_id) LOOP
-        IF customer_record.age > 60 THEN
-            UPDATE loans
-            SET loan_interest_rate = loan_interest_rate - 0.01
-            WHERE customer_id = customer_record.customer_id;
-        END IF;
+    OPEN customer_cursor;
+    LOOP
+        FETCH customer_cursor INTO v_customer_id, v_loan_interest_rate;
+        EXIT WHEN customer_cursor%NOTFOUND;
+        
+        UPDATE customers
+        SET loan_interest_rate = v_loan_interest_rate * 0.99
+        WHERE customer_id = v_customer_id;
     END LOOP;
-    
-    COMMIT;
+    CLOSE customer_cursor;
 END;
 /
