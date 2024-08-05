@@ -1,31 +1,22 @@
 CREATE OR REPLACE PROCEDURE AddNewCustomer (
     p_customer_id IN NUMBER,
     p_name IN VARCHAR2,
+    p_age IN NUMBER,
     p_balance IN NUMBER
-) AS
+) IS
 BEGIN
-    SAVEPOINT start_insert;
-    
-    BEGIN
-        INSERT INTO customers (customer_id, name, balance)
-        VALUES (p_customer_id, p_name, p_balance);
-
-        IF SQL%ROWCOUNT = 0 THEN
-            RAISE_APPLICATION_ERROR(-20006, 'Failed to insert new customer.');
-        END IF;
-    EXCEPTION
-        WHEN DUP_VAL_ON_INDEX THEN
-            ROLLBACK TO start_insert;
-            RAISE_APPLICATION_ERROR(-20007, 'Customer with this ID already exists.');
-        WHEN OTHERS THEN
-            ROLLBACK TO start_insert;
-            RAISE_APPLICATION_ERROR(-20008, 'Error adding new customer.');
-    END;
+    INSERT INTO customers (customer_id, name, age, balance)
+    VALUES (p_customer_id, p_name, p_age, p_balance);
 
     COMMIT;
+
 EXCEPTION
+    WHEN DUP_VAL_ON_INDEX THEN
+        INSERT INTO error_log (error_message, error_date)
+        VALUES ('Customer ID already exists: ' || p_customer_id, SYSDATE);
     WHEN OTHERS THEN
+        INSERT INTO error_log (error_message, error_date)
+        VALUES (SQLERRM, SYSDATE);
         ROLLBACK;
-        RAISE;
 END AddNewCustomer;
 /
